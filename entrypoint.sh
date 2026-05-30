@@ -95,7 +95,7 @@ server_params="$map?Listen?$(server_args) $(server_options)"
 export STEAM_COMPAT_CLIENT_INSTALL_PATH="/home/steam/Steam/"
 export STEAM_COMPAT_DATA_PATH="/home/steam/Steam/steamapps/compatdata/2430930"
 
-start_cmd=("/home/steam/Steam/compatibilitytools.d/proton" "run" "$exec_path" "$server_params")
+start_cmd=("/home/steam/Steam/compatibilitytools.d/proton" "run" "$exec_path" $server_params)
 
 echo "Starting ARK Survival Ascended server..."
 echo "+ ${start_cmd[*]}"
