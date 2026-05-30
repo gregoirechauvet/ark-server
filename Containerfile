@@ -1,5 +1,7 @@
 FROM cm2network/steamcmd:root-trixie
 
+LABEL org.opencontainers.image.description="Ark Survival Ascended dedicated server running with proton"
+
 ENV TZ=UTC
 ENV PROTON_USE_ESYNC=1
 
