@@ -67,8 +67,8 @@ install_path="/home/steam/ark"
 exec_path="${install_path}/ShooterGame/Binaries/Win64/ArkAscendedServer.exe"
 lock_file="${install_path}/ark.lock"
 
-if [ ! -e "$exec_path" ]; then
-  echo "🔍 First-time setup: server files are missing. Preparing to download..."
+if [[ ! -e "$exec_path" || "${DISABLE_UPDATE_CHECK_AT_STARTUP:-}" != "TRUE" ]]; then
+  echo "🔍 Preparing for update..."
 
   # Open file descriptor 9 for writing to the lock file
   exec 9> $lock_file
@@ -79,17 +79,14 @@ if [ ! -e "$exec_path" ]; then
     exit 1
   fi
 
-  # Check whether the installation was done by another process
-  if [ ! -e "$exec_path" ]; then
-    echo "⏳ Lock acquired, proceeding with installation..."
-    /home/steam/steamcmd/steamcmd.sh +force_install_dir ${install_path} +login anonymous +app_update 2430930 +quit
-    echo "✅ Installation completed"
-  else
-    echo "✅ Another process completed the installation while we waited. Skipping download."
-  fi
+  echo "⏳ Lock acquired, proceeding with installation..."
+  /home/steam/steamcmd/steamcmd.sh +force_install_dir ${install_path} +login anonymous +app_update 2430930 +quit
+  echo "✅ Installation/update completed"
 
   # Release the lock
   exec 9>&-
+else
+  echo "ℹ️ Server installation dectected and update check disabled, skipping install"
 fi
 
 map="${SERVER_MAP:-TheIsland_WP}"
