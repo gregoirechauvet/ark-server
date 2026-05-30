@@ -12,6 +12,22 @@ env:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        proton:
+          - version: GE-Proton10-34
+            tags: |
+              type=raw,value=proton-10
+              type=raw,value=latest
+          - version: GE-Proton9-27
+            tags: |
+              type=raw,value=proton-9
+          - version: GE-Proton8-32
+            tags: |
+              type=raw,value=proton-8
+
+    name: Publishing image with ${{ matrix.proton.version }}
+
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -34,6 +50,7 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: ${{ matrix.proton.tags }}
 
       - name: Build and push Docker image
         id: build-and-push
@@ -44,3 +61,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            PROTON_VERSION=${{ matrix.proton.version }}
