@@ -63,13 +63,33 @@ function server_options {
   echo "${server_port} -servergamelog -servergamelogincludetribelogs -ServerRCONOutputTribeLogs$(join_by " " "${opt_server_options[@]}")"
 }
 
-#if [ ! -e "/home/steam/CONTAINER_ALREADY_STARTED_PLACEHOLDER" ]; then
-#    echo "***Downloading ARK Ascended Server"
-#    /home/steam/steamcmd/steamcmd.sh +force_install_dir "/home/steam/ark" +login anonymous +app_update 2430930 +quit
-#	if [ "$updateonstart" = false ]; then
-#	touch "/home/steam/CONTAINER_ALREADY_STARTED_PLACEHOLDER"
-#    fi
-#fi
+exec_path="/home/steam/ark/ShooterGame/Binaries/Win64/ArkAscendedServer.exe"
+lock_file="/tmp/ark.lock"
+
+if [ ! -e "$exec_path" ]; then
+  echo "🔍 First-time setup: server files are missing. Preparing to download..."
+
+  # Open file descriptor 9 for writing to the lock file
+  exec 9> $lock_file
+
+  # Attempt to acquire the installation lock, wait up to 15 minutes
+  if ! flock -w 900 9; then
+    echo "❌ Failed to acquire lock after 15 minutes. Exiting." >&2
+    exit 1
+  fi
+
+  # Check whether the installation was done by another process
+  if [ ! -e "$exec_path" ]; then
+    echo "⏳ Lock acquired, proceeding with installation..."
+    /home/steam/steamcmd/steamcmd.sh +force_install_dir "/home/steam/ark" +login anonymous +app_update 2430930 +quit
+    echo "✅ Installation completed"
+  else
+    echo "✅ Another process completed the installation while we waited. Skipping download."
+  fi
+
+  # Release the lock
+  exec 9>&-
+fi
 
 map="${SERVER_MAP:-TheIsland_WP}"
 server_params="$map?Listen?$(server_args) $(server_options)"
@@ -77,7 +97,7 @@ server_params="$map?Listen?$(server_args) $(server_options)"
 export STEAM_COMPAT_CLIENT_INSTALL_PATH="/home/steam/Steam/"
 export STEAM_COMPAT_DATA_PATH="/home/steam/Steam/steamapps/compatdata/2430930"
 
-start_cmd=("/home/steam/Steam/compatibilitytools.d/proton" "run" "/home/steam/ark/ShooterGame/Binaries/Win64/ArkAscendedServer.exe" "$server_params")
+start_cmd=("/home/steam/Steam/compatibilitytools.d/proton" "run" "$exec_path" "$server_params")
 
 echo "Starting ARK Survival Ascended server..."
 echo "+ ${start_cmd[*]}"
