@@ -63,8 +63,9 @@ function server_options {
   echo "${server_port} -servergamelog -servergamelogincludetribelogs -ServerRCONOutputTribeLogs$(join_by " " "${opt_server_options[@]}")"
 }
 
-exec_path="/home/steam/ark/ShooterGame/Binaries/Win64/ArkAscendedServer.exe"
-lock_file="/tmp/ark.lock"
+install_path="/home/steam/ark"
+exec_path="${install_path}/ShooterGame/Binaries/Win64/ArkAscendedServer.exe"
+lock_file="${install_path}/ark.lock"
 
 if [ ! -e "$exec_path" ]; then
   echo "🔍 First-time setup: server files are missing. Preparing to download..."
@@ -81,7 +82,7 @@ if [ ! -e "$exec_path" ]; then
   # Check whether the installation was done by another process
   if [ ! -e "$exec_path" ]; then
     echo "⏳ Lock acquired, proceeding with installation..."
-    /home/steam/steamcmd/steamcmd.sh +force_install_dir "/home/steam/ark" +login anonymous +app_update 2430930 +quit
+    /home/steam/steamcmd/steamcmd.sh +force_install_dir ${install_path} +login anonymous +app_update 2430930 +quit
     echo "✅ Installation completed"
   else
     echo "✅ Another process completed the installation while we waited. Skipping download."
@@ -107,7 +108,7 @@ server_pid=$!
 # server_pgid=$(awk '{print $5}' /proc/$server_pid/stat)
 
 # Forward the game logs to the main process output
-tail -n +1 -F "/home/steam/ark/ShooterGame/Saved/Logs/ShooterGame.log" >&1 2>&1 &
+tail -n +1 -F "${install_path}/ShooterGame/Saved/Logs/ShooterGame.log" >&1 2>&1 &
 tail_pid=$!
 
 ## Define the shutdown function
