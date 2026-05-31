@@ -21,11 +21,6 @@ RUN set -ex; \
     chmod +x /usr/local/bin/rcon-cli; \
     rm -rf /tmp/rcon.tar.gz /tmp/rcon-0.10.3-amd64_linux
 
-# Install tini
-ARG TINI_VERSION=v0.19.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
-
 # Download proton
 ARG PROTON_VERSION=GE-Proton10-34
 RUN set -ex; \
@@ -50,5 +45,4 @@ COPY entrypoint.sh /entrypoint.sh
 USER steam
 WORKDIR /home/steam/
 
-ENTRYPOINT ["/tini", "--"]
 CMD ["/entrypoint.sh"]

@@ -8,11 +8,13 @@ function join_by {
   fi
 }
 
+rcon_port="${RCON_PORT:-27020}"
+
 function server_args {
   local session_name="SessionName=\"${SESSION_NAME:?missing environment variable}\""
 
   # RCON cannot be disabled, as it's needed for graceful shutdown
-  local rcon_args="RCONEnabled=True?RCONPort=${RCON_PORT:-27020}"
+  local rcon_args="RCONEnabled=True?RCONPort=${rcon_port}"
 
   local opt_server_args=()
 
@@ -79,7 +81,7 @@ if [[ ! -e "$exec_path" || "${DISABLE_UPDATE_CHECK_AT_STARTUP:-}" != "TRUE" ]]; 
     exit 1
   fi
 
-  echo "⏳ Lock acquired, proceeding with installation..."
+  echo "⏳ Proceeding with installation..."
   /home/steam/steamcmd/steamcmd.sh +force_install_dir ${install_path} +login anonymous +app_update 2430930 +quit
   echo "✅ Installation/update completed"
 
@@ -97,43 +99,33 @@ export STEAM_COMPAT_DATA_PATH="/home/steam/Steam/steamapps/compatdata/2430930"
 
 start_cmd=("/home/steam/Steam/compatibilitytools.d/proton" "run" "$exec_path" $server_params)
 
-echo "Starting ARK Survival Ascended server..."
+echo "🚀 Starting ARK Survival Ascended server..."
 echo "+ ${start_cmd[*]}"
 
-"${start_cmd[@]}" >&1 2>&1 &
+# Start the game with setsid so bash does not own the process and won't kill it upon SIGTERM
+setsid "${start_cmd[@]}" &
 server_pid=$!
-# server_pgid=$(awk '{print $5}' /proc/$server_pid/stat)
 
 # Forward the game logs to the main process output
-tail -n +1 -F "${install_path}/ShooterGame/Saved/Logs/ShooterGame.log" >&1 2>&1 &
+tail -n +1 -F "${install_path}/ShooterGame/Saved/Logs/ShooterGame.log" &
 tail_pid=$!
 
-## Define the shutdown function
-_graceful_shutdown() {
-    echo "Stop signal received. Sending RCON shutdown commands..."
+_shutdown() {
+    echo "🛑 Stop signal received. Sending RCON shutdown commands..."
 
     # The 'doexit' command forces a save and shutdown
-    rcon-cli -a "localhost:${RCON_PORT:-27020}" -p "${SERVER_PASSWORD}" -c "doexit"
+    rcon-cli -a "localhost:${rcon_port}" -p "${SERVER_ADMIN_PASSWORD:-}" "DoExit"
 
     # Wait for the server process to finish
     wait $server_pid
 
     kill $tail_pid
 
-    echo "Server exited cleanly."
+    echo "✅ Server exited cleanly."
     exit 0
 }
 
-#_force_shutdown() {
-#  echo "Will attempt force shutdown..."
-#
-#  kill -KILL -"$server_pgid" 2>/dev/null
-#  echo "Exited"
-#  exit 0
-#}
-
-trap _graceful_shutdown SIGTERM
-#trap _force_shutdown SIGINT
+trap _shutdown SIGTERM SIGINT
 
 ## Keep the script alive while waiting for the server
 wait $server_pid
