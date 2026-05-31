@@ -113,6 +113,9 @@ tail_pid=$!
 _shutdown() {
     echo "🛑 Stop signal received. Sending RCON shutdown command..."
 
+    # Broadcast imminent shutdown to players
+    rcon-cli -a "localhost:${rcon_port}" -p "${admin_password}" "Broadcast Server will shutdown..."
+
     # The 'DoExit' command forces a save and shutdown
     rcon-cli -a "localhost:${rcon_port}" -p "${admin_password}" "DoExit"
 
@@ -127,5 +130,5 @@ _shutdown() {
 
 trap _shutdown SIGTERM SIGINT
 
-## Keep the script alive while waiting for the server
+# Keep the script alive while waiting for the server
 wait $server_pid
