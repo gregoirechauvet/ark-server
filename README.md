@@ -30,6 +30,7 @@ services:
     restart: unless-stopped
     init: true
     mem_limit: 16G
+    userns_mode: keep-id # For podman runtime - remove for docker runtime
     stop_grace_period: 1m
     environment:
       - SESSION_NAME=Gotta tame 'em all!
@@ -45,4 +46,23 @@ services:
       # - "27020:27020/tcp"
     volumes:
       - ./data:/home/steam/ark
+```
+
+## File permissions
+
+⚠️ A common quirk when mounting files is host-container permission conflicts.  
+This container runs strictly as an unprivileged user with UID/GID `1000:1000`. It will not attempt to rewrite host file permissions.
+
+### For rootless podman runtime
+
+Add `userns_mode: keep-id` to your service definition in the compose file (or pass `--userns=keep-id` if using the CLI). This tells Podman to natively map the container's internal user to your host user, bypassing permission issues.
+
+### For docker runtime
+
+Because Docker does not use `keep-id` mapping, you must strictly provision the host directories before starting the container. If you let Docker auto-create the mount paths, it will create them as `root`, causing the server to crash.
+
+Ensure the target directories exist and are explicitly owned by UID `1000`:
+```bash
+mkdir -p ./data
+sudo chown -R 1000:1000 ./data
 ```

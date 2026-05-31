@@ -19,28 +19,28 @@ RUN set -ex; \
     chmod +x /usr/local/bin/rcon-cli; \
     rm -rf /tmp/rcon.tar.gz /tmp/rcon-0.10.3-amd64_linux
 
-# Download proton
-ARG PROTON_VERSION=GE-Proton10-34
-RUN set -ex; \
-    mkdir -p "/home/steam/Steam/compatibilitytools.d"; \
-    curl -o "/tmp/proton.tar.gz" -sL "https://github.com/GloriousEggroll/proton-ge-custom/releases/download/${PROTON_VERSION}/${PROTON_VERSION}.tar.gz"; \
-    tar -xzf "/tmp/proton.tar.gz" --strip-components 1 -C "/home/steam/Steam/compatibilitytools.d"; \
-    rm -rf /tmp/proton.tar.gz
-
-# Setup compatibility data
-RUN set -ex; \
-    mkdir -p "/home/steam/Steam/steamapps/compatdata/2430930"; \
-    mkdir -p "/home/steam/Steam/steamapps/common/ark/"; \
-    cp -r /home/steam/Steam/compatibilitytools.d/files/share/default_pfx /home/steam/Steam/steamapps/compatdata/2430930; \
-    chown 1000:1000 -R /home/steam/Steam/steamapps/
-
 # Setup machine-id to silence a proton warning
 RUN set -ex; \
     cat /proc/sys/kernel/random/uuid | tr -d '-' > /etc/machine-id
 
-COPY entrypoint.sh /entrypoint.sh
-
+# Switch to steam user before installating proton
 USER steam
 WORKDIR /home/steam/
 
-CMD ["/entrypoint.sh"]
+# Download proton
+ARG PROTON_VERSION=GE-Proton10-34
+RUN set -ex; \
+    mkdir -p "Steam/compatibilitytools.d"; \
+    curl -o "/tmp/proton.tar.gz" -sL "https://github.com/GloriousEggroll/proton-ge-custom/releases/download/${PROTON_VERSION}/${PROTON_VERSION}.tar.gz"; \
+    tar -xzf "/tmp/proton.tar.gz" --strip-components 1 -C "Steam/compatibilitytools.d"; \
+    rm -rf /tmp/proton.tar.gz
+
+# Setup compatibility data
+RUN set -ex; \
+    mkdir -p "Steam/steamapps/compatdata/2430930"; \
+    mkdir -p "Steam/steamapps/common/ark/"; \
+    cp -r Steam/compatibilitytools.d/files/share/default_pfx Steam/steamapps/compatdata/2430930
+
+COPY --chown=steam:steam entrypoint.sh entrypoint.sh
+
+CMD ["/home/steam/entrypoint.sh"]
