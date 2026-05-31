@@ -21,7 +21,7 @@ RUN set -ex; \
 
 # Setup machine-id to silence a proton warning
 RUN set -ex; \
-    cat /proc/sys/kernel/random/uuid | tr -d '-' > /etc/machine-id
+    tr -d '-' < /proc/sys/kernel/random/uuid > /etc/machine-id
 
 # Switch to steam user before installating proton
 USER steam

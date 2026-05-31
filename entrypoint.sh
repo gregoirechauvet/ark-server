@@ -9,6 +9,7 @@ function join_by {
 }
 
 rcon_port="${RCON_PORT:-27020}"
+admin_password="${SERVER_ADMIN_PASSWORD:?missing environment variable}"
 
 function server_args {
   local session_name="SessionName=\"${SESSION_NAME:?missing environment variable}\""
@@ -16,14 +17,12 @@ function server_args {
   # RCON cannot be disabled, as it's needed for graceful shutdown
   local rcon_args="RCONEnabled=True?RCONPort=${rcon_port}"
 
-  local opt_server_args=()
+  local opt_server_args=(
+    "ServerAdminPassword=$admin_password"
+  )
 
   if [ -n "${SERVER_PASSWORD+x}" ]; then
     opt_server_args+=("ServerPassword=$SERVER_PASSWORD")
-  fi
-
-  if [ -n "${SERVER_ADMIN_PASSWORD+x}" ]; then
-    opt_server_args+=("ServerAdminPassword=$SERVER_ADMIN_PASSWORD")
   fi
 
   if [ -n "${EXTRA_ARGS+x}" ]; then
@@ -88,7 +87,7 @@ if [[ ! -e "$exec_path" || "${DISABLE_UPDATE_CHECK_AT_STARTUP:-}" != "TRUE" ]]; 
   # Release the lock
   exec 9>&-
 else
-  echo "ℹ️ Server installation dectected and update check disabled, skipping install"
+  echo "ℹ️ Server installation detected and update check disabled, skipping install"
 fi
 
 map="${SERVER_MAP:-TheIsland_WP}"
@@ -100,7 +99,7 @@ export STEAM_COMPAT_DATA_PATH="/home/steam/Steam/steamapps/compatdata/2430930"
 start_cmd=("/home/steam/Steam/compatibilitytools.d/proton" "run" "$exec_path" $server_params)
 
 echo "🚀 Starting ARK Survival Ascended server..."
-echo "+ ${start_cmd[*]}"
+echo "🛠 ${start_cmd[*]}"
 
 # Start the game with setsid so bash does not own the process and won't kill it upon SIGTERM
 setsid "${start_cmd[@]}" &
@@ -111,10 +110,10 @@ tail -n +1 -F "${install_path}/ShooterGame/Saved/Logs/ShooterGame.log" &
 tail_pid=$!
 
 _shutdown() {
-    echo "🛑 Stop signal received. Sending RCON shutdown commands..."
+    echo "🛑 Stop signal received. Sending RCON shutdown command..."
 
-    # The 'doexit' command forces a save and shutdown
-    rcon-cli -a "localhost:${rcon_port}" -p "${SERVER_ADMIN_PASSWORD:-}" "DoExit"
+    # The 'DoExit' command forces a save and shutdown
+    rcon-cli -a "localhost:${rcon_port}" -p "${admin_password}" "DoExit"
 
     # Wait for the server process to finish
     wait $server_pid
