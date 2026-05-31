@@ -17,9 +17,7 @@ function server_args {
   # RCON cannot be disabled, as it's needed for graceful shutdown
   local rcon_args="RCONEnabled=True?RCONPort=${rcon_port}"
 
-  local opt_server_args=(
-    "ServerAdminPassword=$admin_password"
-  )
+  local opt_server_args=()
 
   if [ -n "${SERVER_PASSWORD+x}" ]; then
     opt_server_args+=("ServerPassword=$SERVER_PASSWORD")
@@ -28,6 +26,9 @@ function server_args {
   if [ -n "${EXTRA_ARGS+x}" ]; then
     opt_server_args+=("${EXTRA_ARGS}")
   fi
+
+  # Required to be the last argument
+  opt_server_args+=("ServerAdminPassword=$admin_password")
 
   echo "${session_name}?${rcon_args}$(join_by "?" "${opt_server_args[@]}")"
 }

@@ -88,6 +88,7 @@ services:
       - SERVER_PORT=7777
       - SERVER_PASSWORD=pikachu
       - SERVER_ADMIN_PASSWORD=pikapika
+      - CLUSTER_ID=MyCluster
     ports:
       - "7777:7777/udp"
       - "7778:7778/udp"
@@ -110,6 +111,7 @@ services:
       - SERVER_PORT=7779 # Important to change the internal port and not just remap it so the server can advertise itself properly
       - SERVER_PASSWORD=pikachu
       - SERVER_ADMIN_PASSWORD=pikapika
+      - CLUSTER_ID=MyCluster
     ports:
       - "7779:7779/udp"
       - "7780:7780/udp"
