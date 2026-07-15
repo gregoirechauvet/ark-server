@@ -82,7 +82,7 @@ if [[ ! -e "$exec_path" || "${DISABLE_UPDATE_CHECK_AT_STARTUP:-}" != "TRUE" ]]; 
   fi
 
   echo "⏳ Proceeding with installation..."
-  /home/steam/steamcmd/steamcmd.sh +@sSteamCmdForcePlatformType windows +force_install_dir ${install_path} +login anonymous +app_update 2430930 +quit
+  /home/steam/steamcmd/steamcmd.sh +@sSteamCmdForcePlatformType windows +force_install_dir ${install_path} +login anonymous +app_update 2430930 validate +quit
   echo "✅ Installation/update completed"
 
   # Release the lock
