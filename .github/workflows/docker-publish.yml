@@ -15,6 +15,9 @@ jobs:
     strategy:
       matrix:
         proton:
+          - version: GE-Proton11-1
+            tags: |
+              type=raw,value=proton-11
           - version: GE-Proton10-34
             tags: |
               type=raw,value=proton-10
