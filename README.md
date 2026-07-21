@@ -25,7 +25,6 @@ Container image for Ark Survival Ascended dedicated server.
 | `CLUSTER_ID`                      |                | Cluster ID for server transfer                                                                                                                                        |
 | `EXTRA_OPTIONS`                   |                | Extra options to pass to the startup command. Multiple values can be provided, separated by spaces, e.g. `-NoWildBabies -ForceAllowCaveFlyers`                        |
 | `DISABLE_BATTLEYE`                |                | Set to `TRUE` to disable BattlEye                                                                                                                                     |
-| `DISABLE_UPDATE_CHECK_AT_STARTUP` |                | Set to `TRUE` to prevent checking for updates when the server starts                                                                                                  |
 
 ## Volume Mounts (Persistent Storage)
 

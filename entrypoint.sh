@@ -67,29 +67,6 @@ function server_options {
 
 install_path="/home/steam/ark"
 exec_path="${install_path}/ShooterGame/Binaries/Win64/ArkAscendedServer.exe"
-lock_file="${install_path}/ark.lock"
-
-if [[ ! -e "$exec_path" || "${DISABLE_UPDATE_CHECK_AT_STARTUP:-}" != "TRUE" ]]; then
-  echo "🔍 Preparing for update..."
-
-  # Open file descriptor 9 for writing to the lock file
-  exec 9> $lock_file
-
-  # Attempt to acquire the installation lock, wait up to 15 minutes
-  if ! flock -w 900 9; then
-    echo "❌ Failed to acquire lock after 15 minutes. Exiting." >&2
-    exit 1
-  fi
-
-  echo "⏳ Proceeding with installation..."
-  /home/steam/steamcmd/steamcmd.sh +@sSteamCmdForcePlatformType windows +force_install_dir ${install_path} +login anonymous +app_update 2430930 validate +quit
-  echo "✅ Installation/update completed"
-
-  # Release the lock
-  exec 9>&-
-else
-  echo "ℹ️ Server installation detected and update check disabled, skipping install"
-fi
 
 map="${SERVER_MAP:-TheIsland_WP}"
 server_params="$map?Listen?$(server_args) $(server_options)"

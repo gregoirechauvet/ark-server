@@ -17,17 +17,10 @@ jobs:
         proton:
           - version: GE-Proton11-1
             tags: |
-              type=raw,value=proton-11
+              type=raw,value=experimental-proton-11
           - version: GE-Proton10-34
             tags: |
-              type=raw,value=proton-10
-              type=raw,value=latest
-          - version: GE-Proton9-27
-            tags: |
-              type=raw,value=proton-9
-          - version: GE-Proton8-32
-            tags: |
-              type=raw,value=proton-8
+              type=raw,value=experimental-proton-10
 
     name: Publishing image with ${{ matrix.proton.version }}
 
