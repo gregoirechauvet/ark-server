@@ -1,8 +1,8 @@
 name: Docker baked
 
 on:
-  schedule:
-    - cron: '0 * * * *' # Runs every hour
+  # schedule:
+  #   - cron: '0 * * * *' # Runs every hour
   workflow_dispatch:
 
 env:
