@@ -83,18 +83,19 @@ echo "🛠 ${start_cmd[*]}"
 setsid "${start_cmd[@]}" &
 server_pid=$!
 
+log_file="${install_path}/ShooterGame/Saved/Logs/ShooterGame.log"
+mkdir -p "$(dirname "$log_file")"
+touch "$log_file"
+
 # Forward the game logs to the main process output
-tail -n +1 -F "${install_path}/ShooterGame/Saved/Logs/ShooterGame.log" &
+tail -n +1 -F "$log_file" &
 tail_pid=$!
 
 _shutdown() {
     echo "🛑 Stop signal received. Sending RCON shutdown command..."
 
-    # Broadcast imminent shutdown to players
-    rcon-cli -a "localhost:${rcon_port}" -p "${admin_password}" "Broadcast Server will shutdown..."
-
     # The 'DoExit' command forces a save and shutdown
-    rcon-cli -a "localhost:${rcon_port}" -p "${admin_password}" "DoExit"
+    rcon-cli -a "localhost:${rcon_port}" -p "${admin_password}" "DoExit" # || true
 
     # Wait for the server process to finish
     wait $server_pid
