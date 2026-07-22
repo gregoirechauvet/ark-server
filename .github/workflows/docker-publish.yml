@@ -1,10 +1,9 @@
-name: Docker
+name: Docker main
 
 on:
   schedule:
     - cron: '15 15 * * SAT'
-  push:
-    branches: [ "main" ]
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
