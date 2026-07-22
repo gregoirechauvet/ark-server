@@ -69,6 +69,26 @@ install_path="/home/steam/ark"
 exec_path="${install_path}/ShooterGame/Binaries/Win64/ArkAscendedServer.exe"
 lock_file="${install_path}/ark.lock"
 
+echo "🛠 Checking and fixing directory permissions..."
+# Target the paths we know get auto-created by container engines for nested mounts
+# This removes sticky bits (chmod -t) and ensures the owner has write access (chmod u+w)
+for dir in \
+  "${install_path}/ShooterGame/Saved" \
+  "${install_path}/ShooterGame/Saved/Config/WindowsServer" \
+  "${install_path}/ShooterGame/Saved/clusters"
+do
+  if [ -d "$dir" ]; then
+    chmod -t "$dir" 2>/dev/null || true
+    chmod u+rwx "$dir" 2>/dev/null || true
+  fi
+done
+
+# Fail fast if we still don't have write access
+if [ ! -w "${install_path}/ShooterGame/Saved" ]; then
+  echo "❌ ERROR: Cannot write to ${install_path}/ShooterGame/Saved. Check host permissions!" >&2
+  exit 1
+fi
+
 if [[ ! -e "$exec_path" || "${DISABLE_UPDATE_CHECK_AT_STARTUP:-}" != "TRUE" ]]; then
   echo "🔍 Preparing for update..."
 
