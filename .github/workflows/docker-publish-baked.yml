@@ -1,0 +1,92 @@
+name: Docker
+
+on:
+  schedule:
+    - cron: '0 * * * *' # Runs every hour
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        proton:
+          - version: GE-Proton11-1
+            tag: baked-proton-11
+          - version: GE-Proton10-34
+            tag: baked-proton-10
+
+    name: Publishing image with ${{ matrix.proton.version }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Fetch latest Steam build ID
+        id: check
+        run: |
+          LATEST_BUILD_ID=$(curl -sSL "https://api.steamcmd.net/v1/info/2430930" | jq -r '.data["2430930"].depots.branches.public.buildid')
+          
+          if [ -z "$LATEST_BUILD_ID" ] || [ "$LATEST_BUILD_ID" == "null" ]; then
+            echo "Error: Failed to fetch build ID"
+            exit 1
+          fi
+          
+          echo "build_id=$LATEST_BUILD_ID" >> $GITHUB_OUTPUT
+          
+          TAG="${{ matrix.proton.tag }}-$LATEST_BUILD_ID"
+          TOKEN=$(curl -s -u "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}" "https://ghcr.io/token?scope=repository:${GITHUB_REPOSITORY}:pull" | jq -r .token)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+            "https://ghcr.io/v2/${GITHUB_REPOSITORY}/manifests/$TAG")
+          
+          if [ "$STATUS" == "404" ]; then
+            echo "New version detected. Triggering build for $TAG."
+            echo "should_build=true" >> $GITHUB_OUTPUT
+          else
+            echo "Version $TAG already built."
+            echo "should_build=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Checkout repository
+        if: steps.check.outputs.should_build == 'true'
+        uses: actions/checkout@v6
+        with:
+          ref: baked
+
+      - name: Log into registry
+        if: steps.check.outputs.should_build == 'true'
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        if: steps.check.outputs.should_build == 'true'
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ matrix.proton.tag }}-latest
+            type=raw,value=${{ matrix.proton.tag }}-${{ steps.check.outputs.build_id }}
+
+      - name: Build and push Docker image
+        if: steps.check.outputs.should_build == 'true'
+        id: build-and-push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Containerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            PROTON_VERSION=${{ matrix.proton.version }}
+            ARK_BUILD_ID=${{ steps.check.outputs.build_id }}
