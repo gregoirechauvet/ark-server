@@ -126,8 +126,14 @@ echo "🛠 ${start_cmd[*]}"
 setsid "${start_cmd[@]}" &
 server_pid=$!
 
+log_file="${install_path}/ShooterGame/Saved/Logs/ShooterGame.log"
+mkdir -p "$(dirname "$log_file")"
+
+# Truncate file. We could possibly make a backup. Ark also create backup logs, I don't understand what triggers it.
+: > "$log_file"
+
 # Forward the game logs to the main process output
-tail -n +1 -F "${install_path}/ShooterGame/Saved/Logs/ShooterGame.log" &
+tail -n +1 -F "$log_file" &
 tail_pid=$!
 
 _shutdown() {
